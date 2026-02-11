@@ -8,8 +8,8 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // --- YOUR WHATSAPP SECRETS (PASTE FROM FACEBOOK PAGE HERE) ---
-const TOKEN = EAAX2B464K9cBQvhI9jYBisV5aQEungAlpL91C5S6Tx59ZBKfFCqXaQhzearjcQ6fZCZCP0DjnmzvjSJPEgdia0Ir88MfP1VKmRimKgduqLA8Su0JDVoka5aHjmAPQzOw2dKC2ktZAtMPbqpjpU8z4AIaInZBsIixoiPR8ogxiHNXz2lLRpWiD3mxMaJrHQy7oBD7No4nEa6lse650ZCEOSUvqEbwBknbeIIwlwBdrQEhViUNiFG0PfVXZBMLZCXoQae7gSkHemze8Xmj2fqTSVnM9PYi;
-const PHONE_NUMBER_ID = +1 555 138 2371 ;
+const TOKEN = 'EAAX2B464K9cBQvhI9jYBisV5aQEungAlpL91C5S6Tx59ZBKfFCqXaQhzearjcQ6fZCZCP0DjnmzvjSJPEgdia0Ir88MfP1VKmRimKgduqLA8Su0JDVoka5aHjmAPQzOw2dKC2ktZAtMPbqpjpU8z4AIaInZBsIixoiPR8ogxiHNXz2lLRpWiD3mxMaJrHQy7oBD7No4nEa6lse650ZCEOSUvqEbwBknbeIIwlwBdrQEhViUNiFG0PfVXZBMLZCXoQae7gSkHemze8Xmj2fqTSVnM9PYi';
+const PHONE_NUMBER_ID = '+1 555 138 2371';
 // -------------------------------------------------------------
 
 app.get('/', (req, res) => {
