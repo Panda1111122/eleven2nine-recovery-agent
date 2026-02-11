@@ -7,47 +7,53 @@ const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-// --- YOUR WHATSAPP SECRETS ---
-const TOKEN = 'EAAX2B464K9cBQvhI9jYBisV5aQEungAlpL91C5S6Tx59ZBKfFCqXaQhzearjcQ6fZCZCP0DjnmzvjSJPEgdia0Ir88MfP1VKmRimKgduqLA8Su0JDVoka5aHjmAPQzOw2dKC2ktZAtMPbqpjpU8z4AIaInZBsIixoiPR8ogxiHNXz2lLRpWiD3mxMaJrHQy7oBD7No4nEa6lse650ZCEOSUvqEbwBknbeIIwlwBdrQEhViUNiFG0PfVXZBMLZCXoQae7gSkHemze8Xmj2fqTSVnM9PYi';
+// --- YOUR SECRETS ---
+const TOKEN = 'EAAX2B464K9cBQodNjTxOEDGEZCIkmFolMXuMl6yjjRD88I3mFYzpO8cOgpD7eYFN4bFQnhmhaC5A4CgwLMapci0imlsaq5Qel0jmyJEgeB78ZAxz8TZADrjZAixGJqVZCrPbQSEhHCA2WyEK1XZArtDuZBmOmy92E0NN0y1byPf5NzQqrL0LZApKA7S5Oec8ZCXiT6ouydA1PM32cYyzeyxt1ECicxo052NfKKCjs9dB7VuDSJBD6pnnSoL3MUBf6eNqWXKNTjEXjSX9kZAEIeoLO5gSLo';
 const PHONE_NUMBER_ID = '980667585134254';
-// -----------------------------
+// --------------------
 
 app.get('/', (req, res) => {
-    res.send('1129 Agent: Sherlock Mode 🕵️‍♂️');
+    res.send('1129 Agent: Visual Mode 📸');
 });
 
 app.post('/webhook/abandoned-cart', async (req, res) => {
-    console.log('🔔 DOORBELL RUNG! Searching for phone number...');
+    console.log('🔔 DOORBELL RUNG! Processing Visual Recovery...');
 
     const data = req.body;
+    
+    // 1. Get Customer Info
     const customerName = data.customer ? data.customer.first_name : 'Friend';
     const recoveryUrl = data.abandoned_checkout_url;
-
-    // --- THE SHERLOCK HOLMES SEARCH ---
-    // We look in 4 different places for the phone number
+    
+    // 2. Sherlock Search for Phone
     let phone = null;
+    if (data.customer && data.customer.phone) phone = data.customer.phone;
+    else if (data.phone) phone = data.phone;
+    else if (data.shipping_address && data.shipping_address.phone) phone = data.shipping_address.phone;
 
-    if (data.customer && data.customer.phone) {
-        phone = data.customer.phone;
-        console.log('📍 Found phone in: Customer Profile');
-    } else if (data.phone) {
-        phone = data.phone;
-        console.log('📍 Found phone in: Top Level Data');
-    } else if (data.shipping_address && data.shipping_address.phone) {
-        phone = data.shipping_address.phone;
-        console.log('📍 Found phone in: Shipping Address');
-    } else if (data.billing_address && data.billing_address.phone) {
-        phone = data.billing_address.phone;
-        console.log('📍 Found phone in: Billing Address');
+    // 3. GET THE PRODUCT IMAGE & NAME
+    // Shopify stores products in a list called 'line_items'
+    let productName = 'some amazing items';
+    let productImage = 'https://cdn.shopify.com/s/files/1/0533/2089/files/placeholder-images-image_large.png'; // Default fallback
+
+    if (data.line_items && data.line_items.length > 0) {
+        const firstItem = data.line_items[0];
+        productName = firstItem.title;
+        
+        // Sometimes the image is deep inside 'properties' or just 'image_url', 
+        // but often webhook data lacks the direct image URL in 'line_items'.
+        // TRICK: We will use a generic "We miss you" image if Shopify doesn't give us the direct link,
+        // OR if you are using a real store, Shopify usually passes 'image_url' inside line_items.
+        if (firstItem.image_url) {
+            productImage = firstItem.image_url;
+        } else if (firstItem.properties && firstItem.properties.image) {
+            productImage = firstItem.properties.image;
+        }
     }
 
-    console.log(`👤 Customer: ${customerName}`);
-    console.log(`📱 Phone Found: ${phone}`);
+    console.log(`📸 Image to send: ${productImage}`);
 
-    // --- SEND WHATSAPP ---
     if (phone) {
-        // Remove the '+' for WhatsApp if needed, but Cloud API usually likes it.
-        // Let's send it!
         try {
             await axios({
                 method: 'POST',
@@ -59,18 +65,19 @@ app.post('/webhook/abandoned-cart', async (req, res) => {
                 data: {
                     messaging_product: 'whatsapp',
                     to: phone,
-                    type: 'text',
-                    text: {
-                        body: `Hey ${customerName}! 👋 Divyansh's AI here. \n\nYou left something behind! Grab it here: \n${recoveryUrl}`
+                    type: 'image', // <--- THIS IS THE MAGIC CHANGE
+                    image: {
+                        link: productImage,
+                        caption: `Hey ${customerName}! 👋\n\nI saw you looking at **${productName}**. It's a great choice! 🔥\n\nWe saved it for you (but stock is low). Click to grab it:\n${recoveryUrl}`
                     }
                 }
             });
-            console.log('✅ WHATSAPP SENT SUCCESSFULLY!');
+            console.log('✅ PHOTO MESSAGE SENT!');
         } catch (error) {
-            console.error('❌ WhatsApp Failed:', error.response ? JSON.stringify(error.response.data) : error.message);
+            console.error('❌ Failed:', error.response ? JSON.stringify(error.response.data) : error.message);
         }
     } else {
-        console.log('⚠️ Still null. Did you click "Continue to Shipping"?');
+        console.log('⚠️ No phone found.');
     }
 
     res.status(200).send('Received');
