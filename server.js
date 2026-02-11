@@ -4,37 +4,31 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// This allows us to read the data Shopify sends
 app.use(bodyParser.json());
 
-// 1. The "Home" Route (To check if server is alive)
 app.get('/', (req, res) => {
-    res.send('1129 AI Agent is Awake and Listening! 🚀');
+    res.send('1129 AI Agent is Awake! 🚀');
 });
 
-// 2. The "Doorbell" Route (Shopify calls this)
 app.post('/webhook/abandoned-cart', (req, res) => {
     console.log('🔔 DOORBELL RUNG! Cart Abandoned!');
     
-    // Capturing the data Shopify sent us
+    // --- X-RAY VISION START ---
+    // This prints the entire JSON data to your logs so we can see everything
+    console.log('📦 FULL RAW DATA:', JSON.stringify(req.body, null, 2));
+    // --- X-RAY VISION END ---
+
     const cartData = req.body;
     
-    // extracting customer info (Safety check in case data is missing)
-    if (cartData.customer) {
-        const customerName = cartData.customer.first_name;
-        const customerPhone = cartData.customer.phone;
-        const cartPrice = cartData.total_price;
-        
-        console.log(`👤 Customer: ${customerName}`);
-        console.log(`📱 Phone: ${customerPhone}`);
-        console.log(`💰 Value: ${cartPrice}`);
-        
-        // TODO: In Step 2, we will add the WhatsApp trigger here.
-    } else {
-        console.log('⚠️ No customer data attached.');
-    }
+    // Let's try to find the email/phone even if it's not in the usual spot
+    // Sometimes it's at the top level, sometimes inside 'customer'
+    const email = cartData.email || (cartData.customer ? cartData.customer.email : 'No Email Found');
+    const phone = cartData.phone || (cartData.customer ? cartData.customer.phone : 'No Phone Found');
+    
+    console.log(`🔎 SEARCH RESULT:`);
+    console.log(`📧 Email: ${email}`);
+    console.log(`📱 Phone: ${phone}`);
 
-    // We must tell Shopify "We heard you" or it will keep ringing
     res.status(200).send('Received');
 });
 
